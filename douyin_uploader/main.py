@@ -94,12 +94,21 @@ class DouYinVideo(object):
         page = await context.new_page()
         # 访问指定的 URL
         await page.goto("https://creator.douyin.com/creator-micro/content/upload")
-        print('[+]正在上传-------{}.mp4'.format(self.title))
+        print('[+]正在上传-------{} .mp4'.format(self.file_path))
         # 等待页面跳转到指定的 URL，没进入，则自动等待到超时
         print('[-] 正在打开主页...')
         await page.wait_for_url("https://creator.douyin.com/creator-micro/content/upload")
+        # 等待 input[type="file"] 元素出现
+        await page.wait_for_selector('input[type="file"]', state="attached", timeout=5000)  # 等待5秒
+        inputfile_element1 = await page.query_selector('input[type=file]')
+        if inputfile_element1 is not None:
+            await inputfile_element1.set_input_files(self.file_path)
+        else:
+            print("未找到匹配的 input 元素")
         # 点击 "上传视频" 按钮
-        await page.locator(".upload-btn--9eZLd").set_input_files(self.file_path)
+        #await page.locator("label").set_input_files(self.file_path)
+        
+        
 
         # 等待页面跳转到指定的 URL
         while True:
@@ -200,8 +209,14 @@ class DouYinVideo(object):
         await context.close()
         await browser.close()
 
+
     async def main(self):
         async with async_playwright() as playwright:
+            await douyin_setup(self.account_file, handle=True)
             await self.upload(playwright)
 
 
+if __name__ == '__main__':
+    account_file = "douyin_cookie.json"
+    video = DouYinVideo("test", "demo.mp4", ["test"], datetime.now(), account_file)
+    asyncio.run(video.main())
