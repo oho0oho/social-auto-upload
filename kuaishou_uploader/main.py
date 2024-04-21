@@ -74,10 +74,10 @@ class KuaiShouVideo(object):
 
     async def set_video_cover(self, page):
         await page.click('button:has-text("编辑封面")')
-        await page.wait_for_selector('div:has-text("上传封面")')
-        await page.click('div:has-text("上传封面")')
-        await page.wait_for_selector('input[type="file"]')
-        await page.locator('input[type="file"]').set_input_files(self.pic_file)
+        await page.wait_for_selector('div.ant-tabs-tab:has-text("上传封面")')
+        await page.click('div.ant-tabs-tab:has-text("上传封面")')
+        await page.locator(':nth-match(input[type="file"], 2)').set_input_files(self.pic_file)
+        await page.wait_for_timeout(1000)
         await page.click('button:has-text("确认")')
 
 
@@ -147,13 +147,7 @@ class KuaiShouVideo(object):
         await asyncio.sleep(1)
         await input_element.click() 
 
-        # 获取滚动条元素的位置
-        scrollbar = await page.query_selector('div.rc-virtual-list-scrollbar-thumb')
-        scrollbar_bounding_box = await scrollbar.bounding_box()
-        
-        # 移动鼠标到滚动条元素的位置
-        await page.mouse.move(scrollbar_bounding_box['x']-2, scrollbar_bounding_box['y']-2)
-        print("scrollbar_bounding_box = ",scrollbar_bounding_box)
+
         # 持续滚动直至无法继续滚动
         while True:
             try:
@@ -163,18 +157,18 @@ class KuaiShouVideo(object):
                 break
             except Exception:
                 print(".")
-                await page.mouse.wheel(0, 500)
+                # 模拟鼠标悬停在元素上
+                await page.hover('div.rc-virtual-list')
+                # 模拟鼠标滚轮的滚动
+                await page.mouse.wheel(0, 300)
                 # 等待一段时间，让页面有时间加载新的选项
                 await asyncio.sleep(0.05)
-        
-        # 然后点击该元素
+        # 然后点击该元素："健康"
         await page.click('div.ant-select-item-option[title="健康"]')
         
-
         
-        # 获取所有匹配的元素
+        # 点击第2个候选框，弹出
         input_elements = await page.query_selector_all('input.ant-select-selection-search-input')
-
         # 检查是否找到了足够的元素
         if len(input_elements) < 2:
             print("未找到足够的匹配元素")
@@ -184,19 +178,6 @@ class KuaiShouVideo(object):
             await asyncio.sleep(1)
             await input_element_2.click()
         
-        scrollbars = await page.query_selector_all('div.rc-virtual-list-scrollbar-thumb')
-        if len(scrollbars) < 2:
-            print("未找到足够的匹配元素")
-        else:
-            # 定位到第二个滚动条元素的位置
-            print("count = ",len(scrollbars))
-            scrollbar2 = scrollbars[1]
-            print("scrollbar2 = ",scrollbar2)
-            scrollbar_bounding_box2 = await scrollbar2.bounding_box()
-            if scrollbar_bounding_box2 is None:
-                print("滚动条元素不可见或不存在")
-            else:
-                await page.mouse.move(scrollbar_bounding_box2['x'], scrollbar_bounding_box2['y'])
         
         # 持续滚动直至无法继续滚动
         while True:
@@ -207,7 +188,10 @@ class KuaiShouVideo(object):
                 break
             except Exception:
                 print(".")
-                await page.mouse.wheel(0, 150)
+                # 模拟鼠标悬停在元素上
+                await page.hover('div.rc-virtual-list')
+                # 模拟鼠标滚轮的滚动
+                await page.mouse.wheel(0, 300)
                 # 等待一段时间，让页面有时间加载新的选项
                 await asyncio.sleep(0.05)
         
@@ -215,13 +199,10 @@ class KuaiShouVideo(object):
         await page.click('div.ant-select-item-option[title="保健养生"]')
       
         
-
-        
         if self.publish_date != 0:
             await self.set_schedule_time_kuaishou(page, self.publish_date)
 
         
-
         # 判断视频是否发布成功
         while True:
             # 判断视频是否发布成功
